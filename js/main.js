@@ -44,7 +44,7 @@ d3.select("#runButton").on("click", function() {
     .attr("cy", function(d) { return y(d.y)})
     .transition()
       .duration(function(d) { return t(d.y)})
-      .ease("exp")
+      .ease("bounce")
       .attr("r", max_radius)
       .attrTween("cy", function(d, i, a) {
         var currentCircle = d3.select(this);
