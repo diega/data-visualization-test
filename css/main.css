@@ -1,0 +1,15 @@
+#gAxis {
+  fill: none;
+  stroke: black;
+  stroke-width: 1;
+}
+
+#meanLine {
+  stroke-width : 2;
+  stroke : red
+}
+
+circle {
+  fill : orange;
+  fill-opacity : 0.6
+}
