@@ -7,6 +7,7 @@ var max_radius = 10;
 var x = d3.scale.linear().range([0, width]);
 var y = d3.scale.linear().range([height, 0]);
 var t = d3.scale.linear().range([0, transition_length]);
+var color = d3.scale.category20();
 
 var xAxis = d3.svg.axis().scale(x).orient("bottom");
 
@@ -28,6 +29,15 @@ d3.select("#runButton").on("click", function() {
   var elementsCount = d3.select("#elementsCount").property("valueAsNumber");
   var data = d3.range(elementsCount).map(function() { return {x: Math.random(), y: Math.random()}; });
 
+  var lowerValuesCount = {};
+  data.forEach(function(d) {
+    var that = d;
+    var lowerValues = data.reduce(function(reduce, d) {
+      return reduce + ((y(d.y) > y(that.y) && Math.abs(x(d.x) - x(that.x)) <= max_radius * 2)? 1 : 0);
+    }, 0);
+    d.lowerValues = lowerValues;
+  })
+
   x.domain([0, d3.max(data, function(d) { return d.x})]);
   gAxis.transition().duration(transition_length).call(xAxis);
 
@@ -42,36 +52,12 @@ d3.select("#runButton").on("click", function() {
     .attr("r", 1)
     .attr("cx", function(d) { return x(d.x)})
     .attr("cy", function(d) { return y(d.y)})
+    .style("fill", function(d) { return color(d.lowerValues); })
     .transition()
       .duration(function(d) { return t(d.y)})
-      .ease("bounce")
+      .ease("exp")
       .attr("r", max_radius)
-      .attrTween("cy", function(d, i, a) {
-        var currentCircle = d3.select(this);
-        return function(t) {
-          var r0 = currentCircle.attr("r");
-          var x0 = currentCircle.attr("cx");
-          var y0 = currentCircle.attr("cy");
-          circles
-            .sort(function(a, b) { return d3.ascending(a.y, b.y) })
-            .each(function(d, i) {
-              var otherCircle = d3.select(this);
-              var r1 = otherCircle.attr("r");
-              var x1 = otherCircle.attr("cx");
-              var y1 = otherCircle.attr("cy");
-
-              if (!(x0 == x1 && y0 == y1 && r0 == r1)) {
-                var centerDistanceSqrt = Math.pow(x0-x1, 2) + Math.pow(y0-y1, 2);
-                if ((Math.pow(r0-r1, 2) <=  centerDistanceSqrt) && (centerDistanceSqrt <= Math.pow(r0+r1, 2))) {
-                  console.log("colisiona");
-                  //currentCircle.interrupt();
-                }
-              }
-            });
-          var heightInterpolator = d3.interpolate(a, height - max_radius);
-          return heightInterpolator(t);
-        }
-      });
+      .attr("cy", function(d) { return height - d.lowerValues * max_radius * 2 - max_radius; });
 
   circles.exit().remove();
 });
